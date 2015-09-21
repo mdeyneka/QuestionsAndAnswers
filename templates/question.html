@@ -1,0 +1,63 @@
+{% set is_logged_in_base = is_logged_in %}
+{% extends "base.html" %}
+{% block content %}
+
+    <div class="container">
+        <h2>Question</h2>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Asked in {{created_date.strftime("%Y-%m-%d %H:%M:%S")}}
+                    <p>by {{full_user_name}}</p>
+                    <p><h3>{{question_theme}}</h3></p>
+                </div>
+            <div class="panel-body">{{question_text}}</div>
+        </div>
+
+    <br>
+
+
+    <h2>Answers:</h2>
+    {% for answer in my_answers_list %}
+        <div class="well well-sm">
+            Answered in {{answer.created_date.strftime("%Y-%m-%d %H:%M:%S")}}
+            <p>by {{answer.first_name + " " + answer.second_name}}</p>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <p>{{answer.answer_text}}</p>
+                                    
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-2"><span class="pull-right">
+                            <form action = ""  method = "post">
+                                {% if is_logged_in == 1 %}
+                                    <a type="submit" href="{{ url_for('vote', answer_id = answer.answer_id, state = "like") }}" name="like" class="btn btn-default glyphicon glyphicon-hand-up"></a>
+                                    <a type="submit" href="{{ url_for('vote', answer_id = answer.answer_id, state = "dislike")}}" name="dislike" class="btn btn-default glyphicon glyphicon-hand-down"></a>
+                                {% endif %}
+                                <span class="badge">
+                                    {{(answer.sum_like - answer.sum_dislike)}}
+                                </span>
+                            </form>
+                        </span></div>
+                    </div>
+                </div>
+        </div>
+    {% endfor %}
+    
+    <br>
+    {% if is_logged_in == 1 %}
+    <p>    
+        <form method="POST" action="/questions/{{question_id}}">
+                {{answer_form.hidden_tag()}}
+                <dl>
+                    <dt>Answer Text:
+                    <dd>{{ answer_form.answer_text(cols="75", rows="4") }}
+                </dl>
+                <p>
+                <input type="submit" class="btn btn-primary"  value="Comment">
+        </form>
+    {% endif %}
+{% endblock %}

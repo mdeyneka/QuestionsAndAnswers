@@ -1,0 +1,42 @@
+{% set is_logged_in_base = is_logged_in %}
+{% extends "base.html" %}
+{% block content %}
+
+    <h2>Questions</h2>
+    {% if is_logged_in == 1 %}
+        <p>
+            <form method="POST" action="/questions">
+                {{question_form.hidden_tag()}}
+                <dl>
+                    <dt>Question Theme:
+                    <dd>{{ question_form.question_theme(class="css_class", cols="75", rows="1") }}
+                    <dt>Question Text:
+                    <dd>{{ question_form.question_text(cols="75", rows="4") }}
+                </dl>
+                <p>
+                <input type="submit" class="btn btn-primary"  value="Publish">
+            </form>
+        </p>
+    {% endif %}
+        <table class="table">
+            <thread>
+                <tr>
+                    <th>User</th>
+                    <th>Theme</th>
+                    <th>Answers</th>
+                    <th>Post time</th>
+                </tr>
+            </thread>
+            <tbody>
+                {% for n in my_list %}
+                <tr>
+                    <td>{{n.first_name + " " + n.second_name}}</td>
+                    <td><a href="{{ url_for('template_questions', question_id = n.question_id) }}">{{n.question_theme}}</a></td>
+                    <td>{{n.countOf}}</td>
+                    <td>{{n.created_date.strftime("%Y-%m-%d %H:%M:%S")}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+{% endblock %}

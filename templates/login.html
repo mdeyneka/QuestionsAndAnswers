@@ -1,0 +1,16 @@
+{% set is_logged_in_base = is_logged_in %}
+{% extends "base.html" %}
+{% block content %}
+
+    <h2>Login</h2>
+    
+    <form method="POST" action="/login">
+        <dl>
+        {{ form.hidden_tag() }}
+        <dt>{{ form.email.label }}: <dd>{{ form.email(class="css_class") }}
+        <dt>{{ form.password.label }}: <dd>{{ form.password() }}
+        </dl>
+        <p><input class="btn btn-primary" type="submit" value="Sign In"></p>
+    </form>
+
+{% endblock %}

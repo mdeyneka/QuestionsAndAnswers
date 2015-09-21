@@ -1,0 +1,18 @@
+{% set is_logged_in_base = is_logged_in %}
+{% extends "base.html" %}
+{% block content %}
+
+    <h2>Registration</h2>
+    <form name="RegistrationForm" method="POST" action="/registration">
+        {{form.hidden_tag()}}
+        <dl>
+            <dt>{{ form.firstname.label }}: <dd><p>{{ form.firstname(class="css_class") }}</p>
+            <dt>{{ form.secondname.label }}: <dd><p>{{ form.secondname() }}</p>
+            <dt>{{ form.email.label }}: <dd><p>{{ form.email() }}</p>
+            <dt>{{ form.password.label }}: <dd><p>{{ form.password() }}</p>
+            <dt>{{ form.confirm.label }}: <dd><p>{{ form.confirm() }}</p>
+        </dl>
+            <p><input class="btn btn-primary" type="submit" value="Registration"></p>
+        
+    </form>
+{% endblock %}
