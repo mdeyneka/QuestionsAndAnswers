@@ -3,7 +3,7 @@
 {% block content %}
 
     <h2>Questions</h2>
-    {% if is_logged_in == 1 %}
+    {% if session.logged_in %}
         <p>
             <form method="POST" action="/questions">
                 {{question_form.hidden_tag()}}

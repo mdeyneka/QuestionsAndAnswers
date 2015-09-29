@@ -28,11 +28,11 @@
 
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    {% if is_logged_in_base == 0 %}
+                    {% if not session.logged_in %}
                         <li><a href="{{ url_for('template_login') }}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
                         <li><a href="{{ url_for('template_registration') }}"><span class="glyphicon glyphicon-user"></span> Registration</a></li>
                     {% else %}
-                        <li><a href="#">{{logged_name}}</a></li>
+                        <li><a href="#">{{session.fullname}}</a></li>
                         <li><a href="{{ url_for('template_logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                     {% endif %}
                 </ul>

@@ -33,7 +33,7 @@
                         </div>
                         <div class="col-md-2"><span class="pull-right">
                             <form action = ""  method = "post">
-                                {% if is_logged_in == 1 %}
+                                {% if session.logged_in %}
                                     <a type="submit" href="{{ url_for('vote', answer_id = answer.answer_id, state = "like") }}" name="like" class="btn btn-default glyphicon glyphicon-hand-up"></a>
                                     <a type="submit" href="{{ url_for('vote', answer_id = answer.answer_id, state = "dislike")}}" name="dislike" class="btn btn-default glyphicon glyphicon-hand-down"></a>
                                 {% endif %}
@@ -48,7 +48,7 @@
     {% endfor %}
     
     <br>
-    {% if is_logged_in == 1 %}
+    {% if session.logged_in %}
     <p>    
         <form method="POST" action="/questions/{{question_id}}">
                 {{answer_form.hidden_tag()}}

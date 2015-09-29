@@ -1,6 +1,6 @@
 from datetime import datetime
 import hashlib
-from flask import Flask, render_template, Response, redirect, url_for, request, session, abort, flash
+from flask import Flask, render_template, Response, redirect, url_for, request, session, flash
 from flask.ext.login import LoginManager, UserMixin, login_required
 from sqlalchemy import and_
 from flask_sqlalchemy import SQLAlchemy
@@ -27,23 +27,15 @@ def load_user(id):
 
 @app.route("/")
 def template_test():
-    is_logged_in = 0
-    if current_user.is_authenticated():
-        is_logged_in = 1
-        return render_template('home.html', is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name)
-    return render_template('home.html', is_logged_in=is_logged_in)
+    return render_template('home.html')
 
 @app.route('/login', methods=['GET','POST'])
 def template_login():
-    is_logged_in = 0
-
-    if current_user.is_authenticated():
+    if session.get('logged_in'):
         flash("You are logged in already", "notice")
         return redirect("/")
     
     form = LoginForm()
-    
-    
     
     if form.validate_on_submit():
         print "after form validating"
@@ -51,8 +43,9 @@ def template_login():
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             if user.password == hash_of_password:
-                user.is_authenticated = True
                 login_user(user)
+                session['logged_in'] = True
+                session['fullname'] = current_user.get_fullname()
                 return redirect("/")
             else:
                 flash("Login or password is incorrect","notice")
@@ -60,17 +53,12 @@ def template_login():
             flash("This user is not found", "notice")
             return redirect(request.referrer)
             
-    
-    return render_template('login.html', is_logged_in=is_logged_in, form=form)
+    return render_template('login.html', form=form)
 
 @app.route('/registration', methods=['GET','POST'])
 def template_registration():
-    is_logged_in = 0
-    print "into registration template"
-    if current_user.is_authenticated():
+    if session.get('logged_in'):
         return redirect("/")
-        is_logged_in = 1
-    print "is_logged_in = " + str(is_logged_in)
     
     form = RegistrationForm()
     
@@ -95,41 +83,25 @@ def template_registration():
         database.session.add(user)
         database.session.commit()
         return redirect("/")
-    return render_template('registration.html', is_logged_in=is_logged_in, form=form)
+    return render_template('registration.html', form=form)
 
 @app.route("/home")
 def template_home():
-    is_logged_in = 0
-    if current_user.is_authenticated():
-        is_logged_in = 1
-        return render_template('home.html', is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name)
-    return render_template('home.html', is_logged_in=is_logged_in)
+    return render_template('home.html')
 
 @app.route("/about")
 def template_about():
-    is_logged_in = 0
-    if current_user.is_authenticated():
-        is_logged_in = 1
-        return render_template('about.html', is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name)
-    return render_template('about.html', is_logged_in=is_logged_in)
+    return render_template('about.html')
 
 @app.route("/contacts")
 def template_contacts():
-    is_logged_in = 0
-    if current_user.is_authenticated():
-        is_logged_in = 1
-        return render_template('contacts.html', is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name)
-    return render_template('contacts.html', is_logged_in=is_logged_in)
+    return render_template('contacts.html')
 
 @app.route("/questions", defaults={'question_id': None}, methods=['GET', 'POST'])
 @app.route("/questions/<int:question_id>", methods=['GET', 'POST'])
 def template_questions(question_id):
-    is_logged_in = 0
-    if current_user.is_authenticated():
-        is_logged_in = 1
-        
     if question_id is None:
-        if current_user.is_authenticated():
+        if session.get('logged_in'):
             question_form = QuestionForm()
             if question_form.validate_on_submit():
                 question_theme = question_form.question_theme.data
@@ -142,16 +114,46 @@ def template_questions(question_id):
                 database.session.add(question)
                 database.session.commit()
                 return redirect("/questions")
-            result_questions = database.session.query(Question, database.func.count(Answer.answer_id).label('countOf')).outerjoin(Answer).group_by(Question.question_id).join(User, User.user_id==Question.user_id).add_columns(Question.question_id, Question.question_theme, Question.created_date, User.first_name, User.second_name).order_by(Question.created_date.desc()).all()
-            return render_template('questions.html', my_list=result_questions, is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name, question_form=question_form)
-        result_questions = database.session.query(Question, database.func.count(Answer.answer_id).label('countOf')).outerjoin(Answer).group_by(Question.question_id).join(User, User.user_id==Question.user_id).add_columns(Question.question_id, Question.question_theme, Question.created_date, User.first_name, User.second_name).order_by(Question.created_date.desc()).all()
-        return render_template('questions.html', my_list=result_questions, is_logged_in=is_logged_in)
+            result_questions = database.session.query(Question, database.func.count(Answer.answer_id). \
+                                    label('countOf')). \
+                                    outerjoin(Answer). \
+                                    group_by(Question.question_id). \
+                                    join(User, User.user_id==Question.user_id). \
+                                    add_columns(Question.question_id, Question.question_theme, Question.created_date, \
+                                                User.first_name, User.second_name). \
+                                    order_by(Question.created_date.desc()).all()
+            print "logged fullname = " + str(current_user.get_fullname())
+            return render_template('questions.html', \
+                                   my_list=result_questions, \
+                                   logged_name = current_user.get_fullname(), \
+                                    question_form=question_form)
+        result_questions = database.session.query(Question, database.func.count(Answer.answer_id).label('countOf')). \
+                                    outerjoin(Answer). \
+                                    group_by(Question.question_id). \
+                                    join(User, User.user_id==Question.user_id). \
+                                    add_columns(Question.question_id, Question.question_theme, Question.created_date, \
+                                                User.first_name, User.second_name). \
+                                    order_by(Question.created_date.desc()).all()
+        return render_template('questions.html', my_list=result_questions)
  
-    subquery = database.session.query(Answer, database.func.sum(database.case([(Vote.state=="like", 1)], else_=0)).label('sum_like'), database.func.sum(database.case([(Vote.state=="dislike", 1)], else_=0)).label('sum_dislike')).add_columns(Vote.state).outerjoin(Vote).group_by(Answer.answer_id).subquery()
-    result_answers = database.session.query(Answer).outerjoin(User).join(subquery, Answer.answer_id == subquery.c.answer_id).add_columns(Answer.answer_id, Answer.answer_text, Answer.created_date, User.first_name, User.second_name, subquery.c.sum_like, subquery.c.sum_dislike).filter(Answer.question_id == question_id).order_by(Answer.created_date).all()
-    result_question = Question.query.join(User, User.user_id==Question.user_id).add_columns(Question.question_id, Question.question_theme, Question.question_text, Question.created_date, User.first_name, User.second_name).filter(Question.question_id == question_id).first()
+    subquery = database.session.query(Answer, database.func.sum(database.case([(Vote.state=="like", 1)], else_=0)). \
+                                    label('sum_like'), \
+                                    database.func.sum(database.case([(Vote.state=="dislike", 1)], else_=0)). \
+                                    label('sum_dislike')). \
+                                    add_columns(Vote.state).outerjoin(Vote).group_by(Answer.answer_id).subquery()
+    result_answers = database.session.query(Answer).outerjoin(User).\
+                            join(subquery, Answer.answer_id == subquery.c.answer_id).\
+                            add_columns(Answer.answer_id, Answer.answer_text, Answer.created_date, \
+                                        User.first_name, User.second_name, \
+                                        subquery.c.sum_like, subquery.c.sum_dislike). \
+                            filter(Answer.question_id == question_id).order_by(Answer.created_date).all()
+    result_question = Question.query.join(User, User.user_id==Question.user_id). \
+                            add_columns(Question.question_id, Question.question_theme, \
+                                        Question.question_text, Question.created_date, \
+                                        User.first_name, User.second_name). \
+                            filter(Question.question_id == question_id).first()
 
-    if current_user.is_authenticated():
+    if session.get('logged_in'):
         answer_form = AnswerForm()
         if answer_form.validate_on_submit():
             answer_text = answer_form.answer_text.data
@@ -163,17 +165,27 @@ def template_questions(question_id):
             database.session.add(answer)
             database.session.commit()
             return redirect("/questions/"+ str(question_id))
-        return render_template('question.html', question_id = question_id, question_theme=result_question.question_theme, \
-                               question_text = result_question.question_text, full_user_name = result_question.first_name + \
-                               " " + result_question.second_name, created_date = result_question.created_date, my_answers_list = result_answers, is_logged_in=is_logged_in, logged_name = current_user.first_name + " " + current_user.second_name, answer_form=answer_form)
+        return render_template('question.html', question_id = question_id, \
+                                question_theme=result_question.question_theme, \
+                                question_text = result_question.question_text, \
+                                full_user_name = result_question.first_name + \
+                                " " + result_question.second_name, \
+                                created_date = result_question.created_date, \
+                                my_answers_list = result_answers, \
+                                answer_form=answer_form)
     
-    return render_template('question.html', question_id = question_id, question_theme=result_question.question_theme, question_text = result_question.question_text, full_user_name = result_question.first_name + \
-                               " " + result_question.second_name, created_date = result_question.created_date, my_answers_list = result_answers, is_logged_in=is_logged_in)
-    
+    return render_template('question.html', question_id = question_id, \
+                           question_theme=result_question.question_theme, \
+                           question_text = result_question.question_text, \
+                           full_user_name = result_question.first_name + \
+                            " " + result_question.second_name, \
+                           created_date = result_question.created_date, \
+                           my_answers_list = result_answers)
     
 @app.route("/vote/<int:answer_id>/<string:state>", methods=["POST", "GET"])
 def vote(answer_id, state):
-    exists = database.session.query(Vote).filter(and_(Vote.answer_id == answer_id, Vote.user_id == current_user.user_id)).first()
+    exists = database.session.query(Vote). \
+            filter(and_(Vote.answer_id == answer_id, Vote.user_id == current_user.user_id)).first()
     if not exists:
         vote = Vote(
             user_id = current_user.user_id,
@@ -189,5 +201,5 @@ def vote(answer_id, state):
 @app.route("/logout")
 def template_logout():
     logout_user()
+    session.pop('logged_in', None)
     return redirect("/")
-

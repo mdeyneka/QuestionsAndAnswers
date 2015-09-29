@@ -10,30 +10,27 @@ class User(database.Model):
     root = database.Column(database.Boolean, default=False)
     password = database.Column(database.String(200))
     created_date = database.Column(database.DateTime())
-    is_authenticated = database.Column(database.Boolean, default=False)
-    is_active = database.Column(database.Boolean, default=True)
-    is_anonymous = database.Column(database.Boolean, default=False)
     questions = database.relationship("Question", backref = "author", lazy = "dynamic" )
     answers = database.relationship("Answer", backref = "author", lazy = "dynamic" )
     
     def __unicode__(self):
         return str(self.user_id)
-    
-    def is_authenticated(self):
-        return self.is_authenticated
 
     def is_active(self):
-        return self.is_active
+        return True
 
     def is_anonymous(self):
-        return self.is_anonymous
+        return False
     
-
     def get_id(self):
         return unicode(self.user_id)
     
+    def get_fullname(self):
+        return str(self.first_name) + " " + str(self.second_name)
+    
     def __str__(self):
         return "user_id = " + str(self.user_id) + "\n first_name= " + self.first_name
+    
     def __repr__(self):
         return "user_id = " + str(self.user_id) + "\n first_name = " + self.first_name \
                 + "\n second+name = " + self.second_name + "\n email = " + self.email \
